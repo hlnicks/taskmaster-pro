@@ -1,6 +1,7 @@
 var tasks = {};
 
 var createTask = function(taskText, taskDate, taskList) {
+
   // create elements that make up a task item
   var taskLi = $("<li>").addClass("list-group-item");
   var taskSpan = $("<span>")
@@ -34,6 +35,7 @@ var loadTasks = function() {
   // loop over object properties
   $.each(tasks, function(list, arr) {
     console.log(list, arr);
+
     // then loop over sub-array
     arr.forEach(function(task) {
       createTask(task.text, task.date, list);
@@ -44,9 +46,6 @@ var loadTasks = function() {
 var saveTasks = function() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
 };
-
-
-
 
 // modal was triggered
 $("#task-form-modal").on("show.bs.modal", function() {
@@ -81,6 +80,110 @@ $("#task-form-modal .btn-primary").click(function() {
     saveTasks();
   }
 });
+
+// task text is clicked
+$(".list-group").on("click", "p", function() {
+
+  // get current text of <p> element
+  var text = $(this)
+    .text()
+    .trim();
+
+  // replace <p> element with new textarea for user to edit
+  var textInput = $("<textarea>")
+    .addClass("form-control")
+    .val(text);
+    $(this).replaceWith(textInput);
+
+  // focus on new element when area is clicked
+  textInput.trigger("focus");
+});
+
+
+// editable field was unfocused (acts in lieu of save button)
+$(".list-group").on("blur", "textarea", function() {
+
+  // get the textarea's current value/text
+  var text = $(this)
+    .val()
+
+  // get parent's <ul> id attribute
+  var status = $(this)
+    .closest(".list-group")
+    .attr("id")
+    .replace("list-", "");
+
+  // get the tasks position in the list of other <li> elements
+  var index = $(this)
+    .closest(".list-group-item")
+    .index();
+
+  // update task in array and resaves to localStorage
+  tasks[status][index].text = text;
+  saveTasks();
+
+  // recreate p element
+  var taskP = $("<p>")
+    .addClass("m-1")
+    .text(text);
+
+  // replace textarea with new content from user
+  $(this).replaceWith(taskP);
+});
+
+// due date was clicked, puts element in focus
+$(".list-group").on("click", "span", function() {
+
+  // get current text
+  var date = $(this)
+  .text()
+  .trim();
+
+  // create new input element
+  var dateInput = $("<input>")
+  .attr("type", "text")
+  .addClass("form-control")
+  .val(date);
+
+  // swap out elements
+  $(this).replaceWith(dateInput);
+
+  // automatically focus on new element
+  dateInput.trigger("focus");
+});
+
+// value of due date was changed and user clicks out of focus, value is saved
+$(".list-group").on("blur", "input[type=text'text']", function() {
+
+  // get current text
+  var date = $(this)
+  .val()
+  .trim();
+
+  // get parent's <ul> id attribute
+  var status = $(this)
+  .closest(".list-group")
+  .attr("id")
+  .replace("list-", "");
+
+  // get the task's position in the list of other <li> elements
+  var index = $(this)
+  .closest(".list-group-item")
+  .index();
+
+  // update task in array and resave to localStorage
+  tasks[status][index].date = date;
+  saveTasks();
+
+  // recreate span element with bootstrap classes
+  var taskSpan = $("<span>")
+  .addClass("badge badge-primary badge-pill")
+  .text(date);
+
+  // replace input with span element
+  $(this).replaceWith(taskSpan);
+});
+
 
 // remove all tasks
 $("#remove-tasks").on("click", function() {

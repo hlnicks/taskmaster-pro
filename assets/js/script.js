@@ -33,7 +33,6 @@ var loadTasks = function() {
   // loop over object properties
   $.each(tasks, function(list, arr) {
     console.log(list, arr);
-
     // loop over sub-array
     arr.forEach(function(task) {
       createTask(task.text, task.date, list);
@@ -58,8 +57,7 @@ var auditTask = function(taskEl) {
   // apply new class if task is near/overdue
   if (moment().isAfter(time)) {
     $(taskEl).addClass("list-group-item-danger");
-  }
-  else if (Math.abs(moment().diff(time, "days")) <= 2) {
+  } else if (Math.abs(moment().diff(time, "days")) <= 2) {
     $(taskEl).addClass("list-group-item-warning");
   }
 };
@@ -74,16 +72,18 @@ $(".card .list-group").sortable({
   tolerance: "pointer",
   helper: "clone",
   activate: function(event, ui) {
-    console.log(ui);
+    $(this).addClass("dropover");
+    $(".bottom-trash").addClass("bottom-trash-drag");
   },
   deactivate: function(event, ui) {
-    console.log(ui);
+    $(this).removeClass("dropover");
+    $(".bottom-trash").removeClass("bottom-trash-drag");
   },
   over: function(event) {
-    console.log(event);
+    $(event.target).addClass("dropover-active");
   },
   out: function(event) {
-    console.log(event);
+    $(event.target).removeClass("dropover-active");
   },
   update: function() {
 
@@ -91,7 +91,7 @@ $(".card .list-group").sortable({
     var tempArr = [];
 
     // loop over current set of children in sortable list
-    $(this).children().each(function(){
+    $(this).children().each(function() {
         // save values in temp array
         tempArr.push({
           text: $(this)
@@ -112,9 +112,9 @@ $(".card .list-group").sortable({
     tasks[arrName] = tempArr;
     saveTasks();
   },
-  stop: function(event) {
-    $(this).removeClass("dropover");
-  }
+  // stop: function(event) {
+  //   $(this).removeClass("dropover");
+  // }
 });
 
 
@@ -123,15 +123,23 @@ $("#trash").droppable({
   accept: ".card .list-group-item",
   tolerance: "touch",
   drop: function(event, ui) {
-    // remove dragged element from DOM
     ui.draggable.remove();
+    $(".bottom-trash").removeClass("bottom-trash-active");
+
   },
   over: function(event, ui) {
-    console.log(ui);
+    $(".bottom-trash").addClass("bottom-trash-active");
   },
   out: function(event, ui) {
-    console.log(ui);
+    $(".bottom-trash").removeClass("bottom-trash-active");
   }
+});
+
+// convert text field into jquery date picker
+$("#modalDueDate").datepicker({
+
+  //forces user to select future date
+  minDate: 1
 });
 
 
@@ -148,7 +156,7 @@ $("#task-form-modal").on("shown.bs.modal", function() {
 });
 
 // save button in modal was clicked
-$("#task-form-modal .btn-primary").click(function() {
+$("#task-form-modal .btn-save").click(function() {
   // get form values
   var taskText = $("#modalTaskDescription").val();
   var taskDate = $("#modalDueDate").val();
@@ -232,7 +240,7 @@ $(".list-group").on("click", "span", function() {
 $(".list-group").on("change", "input[type='text']", function() {
 
   // get current text
-  var date = $(this).val()
+  var date = $(this).val();
 
   // get parent's <ul> id attribute
   var status = $(this).closest(".list-group").attr("id").replace("list-", "");
@@ -252,11 +260,7 @@ $(".list-group").on("change", "input[type='text']", function() {
 
   // pass tasks <li> element into auditTask() to check new due date
   auditTask($(taskSpan).closest(".list-group-item"));
-
 });
-
-
-
 
 // remove all tasks
 $("#remove-tasks").on("click", function() {
@@ -268,12 +272,12 @@ $("#remove-tasks").on("click", function() {
   saveTasks();
 });
 
-$("#modalDueDate").datepicker({
-  minDate: 1
-});
-
-
 // load tasks for the first time
 loadTasks();
 
-
+// audit due dates every 30 mins
+setInterval(function() {
+  $(".card .list-group-item").each(function() {
+    auditTask($(this));
+  });
+}, 1800000);
